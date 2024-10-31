@@ -1,15 +1,53 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form, HTTPException
+import mysql.connector
+from fastapi.middleware.cors import CORSMiddleware
 
+# Instantiate the app
 app = FastAPI()
 
-@app.get("/", description="This is our first route")
-async def get():
-    return {"message": "hello world"}
+# Database Connection
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="root",
+    database="usermanagement"
+)
 
-@app.put("/")
-async def put():
-    return {"message": "hello world from put route"}
+# CORS middleware to allow cross-origin requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
-@app.post("/")
-async def post():
-    return {"message": "hello world from post route"}
+# Declaring the default method
+@app.get("/", description="Welcome API")
+def root():
+    return {"message": "Welcome to Fast API Dev Tutorial"}
+
+# Define get method
+@app.get("/get_users", description="Get user details")
+def get_users():
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users_table")
+    records = cursor.fetchall()
+    cursor.close()
+    return {
+        "message": "Successful",
+        "status": True,
+        "data": records
+    }
+
+# Define add user method
+@app.post("/add_users")
+def add_users(name: str = Form(...), role: str = Form(...)):
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("INSERT INTO users_table (name, role) VALUES (%s, %s)", (name, role))
+    conn.commit()
+    cursor.close()
+    return {
+        "message": "New User added successfully",
+        "status": True
+    }
