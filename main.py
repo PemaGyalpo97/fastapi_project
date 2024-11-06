@@ -29,7 +29,7 @@ def root():
 
 # Define get method
 @app.get("/get_users", description="Get user details")
-def get_users():
+async def get_users():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users_table")
     records = cursor.fetchall()
@@ -42,7 +42,7 @@ def get_users():
 
 # Define get specific users method
 @app.get("/get_specific_users", description="Get specific user details")
-def get_specific_users(user_id: int):
+async def get_specific_users(user_id: int):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users_table where user_id = %s", (user_id,))
     records = cursor.fetchall()
@@ -59,7 +59,7 @@ def get_specific_users(user_id: int):
 
 # Define add user method
 @app.post("/add_users")
-def add_users(name: str = Form(...), role: str = Form(...)):
+async def add_users(name: str = Form(...), role: str = Form(...)):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("INSERT INTO users_table (name, role) VALUES (%s, %s)", (name, role))
     cursor.execute("select user_id from users_table where name = (%s) and role = (%s)", (name, role))
@@ -73,7 +73,7 @@ def add_users(name: str = Form(...), role: str = Form(...)):
     }
 
 @app.delete("/delete_user", description="Delete a specific user by ID")
-def delete_user(user_id: int):
+async def delete_user(user_id: int):
     cursor = conn.cursor()
     
     # Execute delete SQL command
