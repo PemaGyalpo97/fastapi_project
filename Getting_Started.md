@@ -11,5 +11,3 @@
     -   Download latest version from https://dev.mysql.com/downloads/workbench/
     -   Complete the installation
     -   Create a database and table as required
-
--   

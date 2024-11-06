@@ -1,9 +1,24 @@
 Python Language
 
 Virtual Environment
+    - Python Virtual Environment
+    - Needs and Benefits
 
 Uvicorn
+    - ASGI
+    - Deploy on Gunicorn + Uvicorn Workers (best)
 
-Swagger Doc
+Swagger Doc and Swagger Redoc
 
 FastAPI Key Features
+    - built on Starlette and Pydantic
+    - High Performance
+    - Automatic Interactive Doc
+    - Automatic Data Validation
+    - Asynchronous Support
+    - Dependency Injection
+
+Security 
+    - JWT 
+    - OAuth2
+    - API Key
