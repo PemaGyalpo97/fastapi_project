@@ -72,16 +72,20 @@ async def add_users(name: str = Form(...), role: str = Form(...)):
         "user_id": records
     }
 
-@app.delete("/delete_user", description="Delete a specific user by ID")
+@app.delete("/delete_user/{user_id}", description="Delete a specific user by ID")
 async def delete_user(user_id: int):
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     
     # Execute delete SQL command
     cursor.execute("DELETE FROM users_table WHERE user_id = %s", (user_id,))
     conn.commit()  # Commit the transaction to apply changes
     
-    cursor.close()
+    # Check if any row was affected (deleted)
+    if cursor.rowcount == 0:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="User not found")
     
+    cursor.close()
     return {
         "message": "User Deleted Successfully",
         "status": True
