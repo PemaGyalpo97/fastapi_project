@@ -22,3 +22,9 @@ Security
     - JWT 
     - OAuth2
     - API Key
+
+
+    - endpoint to fetch image(crud)
+    - best Security
+    - query management tool like prisma  - orm
+    - 
