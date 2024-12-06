@@ -27,4 +27,3 @@ Security
     - endpoint to fetch image(crud)
     - best Security
     - query management tool like prisma  - orm
-    - 

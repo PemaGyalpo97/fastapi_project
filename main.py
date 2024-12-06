@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, HTTPException, File, UploadFile
 import mysql.connector
 from fastapi.middleware.cors import CORSMiddleware
+
+# Directory for the image to be stored
+imageDirectory = "E:\\N__G__N\\Fast_API\\FastAPI_Images"
 
 # Instantiate the app
 app = FastAPI()
@@ -72,6 +75,7 @@ async def add_users(name: str = Form(...), role: str = Form(...)):
         "user_id": records
     }
 
+# Define delete user method with specific id
 @app.delete("/delete_user/{user_id}", description="Delete a specific user by ID")
 async def delete_user(user_id: int):
     cursor = conn.cursor(dictionary=True)
@@ -91,3 +95,15 @@ async def delete_user(user_id: int):
         "status": True
     }
 
+# Define upload image method
+@app.post("/upload/")
+async def upload_image(file: UploadFile = File(...)):
+    
+    file.filename = f"uuid.uuid4().jpg"
+    contents = await file.read()
+
+    # save the file 
+    with open(f"{imageDirectory}{file.filename}", "wb") as f:
+        f.write(contents)
+    
+    return {"filename": file.filename}
