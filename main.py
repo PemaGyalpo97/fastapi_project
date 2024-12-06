@@ -1,10 +1,14 @@
+"""
+FAST API
+"""
 import os
 import uuid
 import io
 from datetime import datetime
 import mysql.connector
 
-from PIL import Image
+from PIL import Image # type: ignore
+from dotenv import load_dotenv
 from fastapi import FastAPI, Form, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,21 +22,24 @@ os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
 # Instantiate the app
 app = FastAPI()
 
+# Load the .env file
+load_dotenv()
+
 # Database Connection
 conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="root",
-    database="usermanagement"
+    host=os.getenv("HOSTS"),
+    user=os.getenv("DB_USERNAME"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME")
 )
 
 # CORS middleware to allow cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://front-end.com"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["Authorization", "Content-Type"]
 )
 
 # Root endpoint
@@ -192,8 +199,6 @@ async def get_image(image_name: str):
     
     # Check if the image exists in the directory
     image_path = os.path.join(IMAGE_DIRECTORY, image_name)
-    print(image_name)
-    print(image_path)
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found.")
 
@@ -212,7 +217,7 @@ async def get_image(image_name: str):
             with Image.open(image_path) as img:
                 width, height = img.size
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to retrieve image dimensions. Error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f'Failed to retrieve image dimensions. Error: {str(e)}') from e
 
         # Get image size in MB
         file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
@@ -229,4 +234,4 @@ async def get_image(image_name: str):
         }
 
     except mysql.connector.Error as db_error:
-        raise HTTPException(status_code=500, detail=f"Database Error: {str(db_error)}")
+        raise HTTPException(status_code=500, detail=f'Database Error: {str(db_error)}') from db_error
