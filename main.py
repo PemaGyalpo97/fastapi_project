@@ -180,4 +180,53 @@ async def upload_image(file: UploadFile = File(...)):
         "File Size mb": f"{file_size_mb:.2f} MB",
         "File Dimensions": f"{width}x{height}"
     }
-#
+    
+# Define get image method
+@app.get("/get_image/{image_name}", description="Get image and its details by image name")
+async def get_image(image_name: str):
+    """
+    Fetch the image and its details (e.g., file size, dimensions) by the image name.
+    """
+    # Remove all spaces from the image_name
+    image_name = image_name.replace(" ", "")
+    
+    # Check if the image exists in the directory
+    image_path = os.path.join(IMAGE_DIRECTORY, image_name)
+    print(image_name)
+    print(image_path)
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="Image not found.")
+
+    # Fetch image details from the database
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM image_table WHERE image_name = %s", (image_name,))
+        image_record = cursor.fetchone()
+        cursor.close()
+
+        if not image_record:
+            raise HTTPException(status_code=404, detail="Image details not found in the database.")
+        
+        # Get image dimensions
+        try:
+            with Image.open(image_path) as img:
+                width, height = img.size
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to retrieve image dimensions. Error: {str(e)}")
+
+        # Get image size in MB
+        file_size_mb = os.path.getsize(image_path) / (1024 * 1024)
+
+        # Return image and its details
+        return {
+            "status": True,
+            "message": "Image fetched successfully",
+            "File Name": image_name,
+            "File Path": image_path,
+            "File Size mb": f"{file_size_mb:.2f} MB",
+            "File Dimensions": f"{width}x{height}",
+            "Database Record": image_record  # You can include database details as well
+        }
+
+    except mysql.connector.Error as db_error:
+        raise HTTPException(status_code=500, detail=f"Database Error: {str(db_error)}")
