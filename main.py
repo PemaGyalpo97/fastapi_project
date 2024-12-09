@@ -251,7 +251,7 @@ async def upload_image(file: UploadFile = File(...)):
         "File Name": file.filename,
         "File Path": file_path,
         "File Size mb": f"{file_size_mb:.2f} MB",
-        "File Dimensions": f"{width}x{height}"
+        "File Dimensions": f"{width}x{height}" 
     }
     
 # Define get image method
