@@ -3,5 +3,5 @@ uvicorn[standard]
 python-multipart
 mysql-connector-python
 python-jose[cryptography]
-passlib
-bcrypt
+bcrypt==3.2.0
+passlib==1.7.4

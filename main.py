@@ -9,6 +9,8 @@ import mysql.connector
 
 from PIL import Image # type: ignore
 from dotenv import load_dotenv
+from passlib.context import CryptContext
+from pydantic import BaseModel
 from fastapi import FastAPI, Form, HTTPException, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +23,9 @@ os.makedirs(IMAGE_DIRECTORY, exist_ok=True)
 
 # Instantiate the app
 app = FastAPI()
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Load the .env file
 load_dotenv()
@@ -86,12 +91,16 @@ async def get_specific_users(user_id: int):
 
 # Add a new user
 @app.post("/add_users")
-async def add_users(name: str = Form(...), role: str = Form(...)):
+async def add_users(name: str = Form(...), role: str = Form(...), 
+                    username: str = Form(...), password: str = Form(...)):
     """
     Add a new user to the database.
     """
+    # Hash and Store the password
+    hashed_password = pwd_context.hash(password)
+    
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("INSERT INTO users_table (name, role) VALUES (%s, %s)", (name, role))
+    cursor.execute("INSERT INTO users_table (name, role, username, password) VALUES (%s, %s, %s, %s)", (name, role, username, hashed_password))
     cursor.execute("SELECT user_id FROM users_table WHERE name = %s AND role = %s", (name, role))
     records = cursor.fetchall()
     conn.commit()
@@ -101,6 +110,63 @@ async def add_users(name: str = Form(...), role: str = Form(...)):
         "status": True,
         "user_id": records
     }
+  
+# Update password for a user
+@app.put("/update_password", description="Update Password for a specific user")
+async def update_user_password(user_id: int, password: str):
+    """
+    Update Password for a specific user.
+    """
+    # Hash the password
+    hashed_password = pwd_context.hash(password)
+    
+    # Update the password in the database
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "UPDATE users_table SET password = %s WHERE user_id = %s",
+        (hashed_password, user_id)
+    )
+    conn.commit()
+    cursor.close()
+    
+    # Check if the user was updated
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "message": "Password updated successfully",
+        "status": True
+    }
+
+# Verify Log in details of a user
+@app.get("/log_in/{user_id}/{password}", description="Verify log in details of a user")
+async def verify_user_login(user_id: int, password: str):
+    """
+    Verify User Log In details
+    """
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT password FROM users_table WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()  # Fetch the result
+    
+    if not result:
+        return {
+            "status": False,
+            "message": "User not found"
+        }
+    
+    hashed_password_db = result['password']
+    # Compare the provided password with the hashed password
+    if pwd_context.verify(password, hashed_password_db):
+        return {
+            "status": True,
+            "message": "User Login Successful"
+        }
+    else:
+        return {
+            "status": False,
+            "message": "Incorrect password"
+        }
 
 # Delete a user by ID
 @app.delete("/delete_user/{user_id}", description="Delete a specific user by ID")
